@@ -1,0 +1,17 @@
+echo:
+`${timestamp} <${username}> (echo): ${contents}`
+
+broadcast:
+`${timestamp} <${username}> (all): ${contents}`
+
+direct message:
+`${timestamp} <${username}> (whisper): ${contents}`
+
+connection alert:
+`${timestamp}: <${username}> has connected`
+`${timestamp}: <${username}> has disconnected`
+
+users:
+`${timestamp}: currently connected users:`
+(repeated)
+`<${username}>`
