@@ -6,29 +6,25 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicReferenceArray;
-
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import com.cooksys.assessment.model.Message;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ClientHandler implements Runnable {
 	private Logger log = LoggerFactory.getLogger(ClientHandler.class);
-	//static ArrayList<String> users;
-	static HashMap<Socket,String> users;
+	static ConcurrentHashMap<String,Socket> users=new ConcurrentHashMap<String,Socket>();
 	private Socket socket;
 
 	public ClientHandler(Socket socket) {
 		super();
 		this.socket = socket;
-		users=new HashMap<Socket,String>();
 	}
-
+	
 	public void run() {
 		try {
 
@@ -43,11 +39,26 @@ public class ClientHandler implements Runnable {
 				switch (message.getCommand()) {
 					case "connect":
 						log.info("user <{}> connected", message.getUsername());
-						users.put(socket, message.getUsername());
+						users.put(message.getUsername(),socket);
+						Collection<Socket> keys = users.values();
+						message.setContents("user "+message.getUsername()+" connected");
+						for(Socket s: keys){
+							writer=new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
+							writer.write(mapper.writeValueAsString(message));
+							writer.flush();
+						}
 						break;
 					case "disconnect":
 						log.info("user <{}> disconnected", message.getUsername());
 						this.socket.close();
+						users.remove(message.getUsername(),socket);
+						Collection<Socket> keys1 = users.values();
+						message.setContents("user "+message.getUsername()+" disconnected");
+						for(Socket s: keys1){
+							writer=new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
+							writer.write(mapper.writeValueAsString(message));
+							writer.flush();
+						}
 						break;
 					case "echo":
 						log.info("user <{}> echoed message <{}>", message.getUsername(), message.getContents());
@@ -56,10 +67,29 @@ public class ClientHandler implements Runnable {
 						writer.flush();
 						break;
 					case "users":
-						log.info(""+users.size());
-						message.setContents(users.values().toString());
+						log.info(users.keySet().toString());
+						message.setContents(users.keySet().toString());
 						writer.write(mapper.writeValueAsString(message));
 						writer.flush();
+						break;
+					case "broadcast":
+						Collection<Socket> keys11 = users.values();
+						log.info("user <{}> broadcasted message <{}>", message.getUsername(), message.getContents());
+						for(Socket s: keys11){
+							writer=new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
+							writer.write(mapper.writeValueAsString(message));
+							writer.flush();
+						}
+						break;
+					case "dm":
+						String[] contentSplit=message.getContents().split(" ",2);
+						String addressee=contentSplit[0];
+						if(users.get(addressee).isConnected()){
+							message.setContents(contentSplit[1]);
+							writer=new PrintWriter(new OutputStreamWriter(users.get(addressee).getOutputStream()));
+							writer.write(mapper.writeValueAsString(message));
+							writer.flush();
+						}
 						break;
 
 				}
