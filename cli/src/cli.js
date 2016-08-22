@@ -42,8 +42,6 @@ cli
     } else if (command === 'broadcast') {
       server.write(new Message({ username, command, contents }).toJSON() + '\n')
     } else if (command.charAt(0)==='@') {
-    //const tempcontents = "test content"
-    //const tempcmd = "dm"
       server.write(new Message({ username, command, contents }).toJSON() + '\n')
     } else {
       this.log(`Command <${command}> was not recognized`)
