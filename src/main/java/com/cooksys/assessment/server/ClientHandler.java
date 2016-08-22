@@ -6,9 +6,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Enumeration;
+import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,13 +34,15 @@ public class ClientHandler implements Runnable {
 			while (!socket.isClosed()) {
 				String raw = reader.readLine();
 				Message message = mapper.readValue(raw, Message.class);
-
+				Date d;
+				System.out.println(message.getCommand());
 				switch (message.getCommand()) {
 					case "connect":
 						log.info("user <{}> connected", message.getUsername());
 						users.put(message.getUsername(),socket);
 						Collection<Socket> keys = users.values();
-						message.setContents("user "+message.getUsername()+" connected");
+						d= new Date();
+						message.setContents(d.toString()+": <"+message.getUsername()+"> has connected");
 						for(Socket s: keys){
 							writer=new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
 							writer.write(mapper.writeValueAsString(message));
@@ -53,7 +54,8 @@ public class ClientHandler implements Runnable {
 						this.socket.close();
 						users.remove(message.getUsername(),socket);
 						Collection<Socket> keys1 = users.values();
-						message.setContents("user "+message.getUsername()+" disconnected");
+						d= new Date();
+						message.setContents(d.toString()+": <"+message.getUsername()+"> has disconnected");
 						for(Socket s: keys1){
 							writer=new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
 							writer.write(mapper.writeValueAsString(message));
@@ -62,30 +64,36 @@ public class ClientHandler implements Runnable {
 						break;
 					case "echo":
 						log.info("user <{}> echoed message <{}>", message.getUsername(), message.getContents());
+						d= new Date();
+						message.setContents(d.toString()+": <"+message.getUsername()+"> (echo): "+message.getContents());
 						String response = mapper.writeValueAsString(message);
 						writer.write(response);
 						writer.flush();
 						break;
 					case "users":
 						log.info(users.keySet().toString());
-						message.setContents(users.keySet().toString());
+						d=new Date();
+						message.setContents(d.toString()+": currently connected users: \n<"+String.join(">\n<", users.keySet())+">");
 						writer.write(mapper.writeValueAsString(message));
 						writer.flush();
 						break;
 					case "broadcast":
 						Collection<Socket> keys11 = users.values();
 						log.info("user <{}> broadcasted message <{}>", message.getUsername(), message.getContents());
+						d=new Date();
+						message.setContents(d.toString()+": <"+message.getUsername()+"> (all): "+message.getContents());
 						for(Socket s: keys11){
 							writer=new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
 							writer.write(mapper.writeValueAsString(message));
 							writer.flush();
 						}
 						break;
-					case "dm":
+					case "@dm":
 						String[] contentSplit=message.getContents().split(" ",2);
 						String addressee=contentSplit[0];
-						if(users.get(addressee).isConnected()){
-							message.setContents(contentSplit[1]);
+						d= new Date();
+						if(users.containsKey(addressee)&&users.get(addressee).isConnected()){
+							message.setContents(d.toString()+": <"+message.getUsername()+"> (whisper): "+contentSplit[1]);
 							writer=new PrintWriter(new OutputStreamWriter(users.get(addressee).getOutputStream()));
 							writer.write(mapper.writeValueAsString(message));
 							writer.flush();
