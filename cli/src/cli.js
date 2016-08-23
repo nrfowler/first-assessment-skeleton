@@ -30,9 +30,9 @@ cli
     })
   })
   .action(function (input, callback) {
-    const [ command, ...rest ] = words(input, /[@-\w]+/g)
+    let [ command, ...rest ] = words(input, /[@-\w]+/g)
     const contents = rest.join(' ')
-    //console.log(command.charAt(0))
+
     if (command === 'disconnect') {
       server.end(new Message({ username, command }).toJSON() + '\n')
     } else if (command === 'echo') {
@@ -42,8 +42,7 @@ cli
     } else if (command === 'broadcast') {
       server.write(new Message({ username, command, contents }).toJSON() + '\n')
     } else if (command.charAt(0)==='@') {
-      let temp='@'
-      server.write(new Message({ username, temp, contents }).toJSON() + '\n')
+      server.write(new Message({ username, command, contents }).toJSON() + '\n')
     } else {
       this.log(`Command <${command}> was not recognized`)
     }
