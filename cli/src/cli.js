@@ -47,7 +47,7 @@ cli
     })
   })
   .action(function (input, callback) {
-    let [ command, ...rest ] = words(input, /[@-\w]+/g)
+    let [ command, ...rest ] = words(input, /[^\s]+/g)
     let contents = rest.join(' ')
 
     if (command === 'disconnect') {

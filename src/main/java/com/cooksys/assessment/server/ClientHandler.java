@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -19,7 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ClientHandler implements Runnable {
 	private Logger log = LoggerFactory.getLogger(ClientHandler.class);
 	private Socket socket;
-
+	private String username;
 	public ClientHandler(Socket socket) {
 		super();
 		this.socket = socket;
@@ -46,9 +47,9 @@ public class ClientHandler implements Runnable {
 	}
 
 	public void run() {
+		ObjectMapper mapper = new ObjectMapper();
 		try {
 			HashMap<String, Socket> users=new MapWrapper().getMap();
-			ObjectMapper mapper = new ObjectMapper();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
 
@@ -65,8 +66,9 @@ public class ClientHandler implements Runnable {
 					if(users.containsKey(message.getUsername())){
 						message.setUsername(message.getUsername()+"1");
 					}
-					log.info("user <{}> connected", message.getUsername());
-					users.put(message.getUsername(), socket);
+					username=message.getUsername();
+					log.info("user <{}> connected", username);
+					users.put(username, socket);
 					sendAll("> has connected", message, mapper);
 				}
 				if (cmd.equals("disconnect")) {
@@ -131,9 +133,31 @@ public class ClientHandler implements Runnable {
 					}
 				}
 			}
-		} catch (IOException e) {
+		} catch (SocketException e){
+			log.error("Socket connection error :/", e);
+			log.info("user <{}> disconnected", username);
+			try {
+				this.socket.close();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			if (new MapWrapper().getMap().remove(username, socket)) {
+				Message message=new Message();
+				message.setUsername(username);
+				message.setCommand("disconnect");
+				message.setContents("");
+				try {
+					sendAll("> has disconnected", message, mapper);
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
+		}catch (IOException e) {
 			log.error("Something went wrong :/", e);
 		}
+		
 	}
 
 }
