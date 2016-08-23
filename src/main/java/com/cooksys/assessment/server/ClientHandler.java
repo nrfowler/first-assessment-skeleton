@@ -18,7 +18,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ClientHandler implements Runnable {
 	private Logger log = LoggerFactory.getLogger(ClientHandler.class);
-	static HashMap<String, Socket> users = new HashMap<String, Socket>();
 	private Socket socket;
 
 	public ClientHandler(Socket socket) {
@@ -34,7 +33,7 @@ public class ClientHandler implements Runnable {
  */
 	private void sendAll(String contents, Message message, ObjectMapper mapper) throws IOException {
 
-		Collection<Socket> keys = users.values();
+		Collection<Socket> keys = new MapWrapper().getMap().values();
 		Date d1 = new Date();
 		PrintWriter clWriter;
 		message.setContents(d1.toString() + ": <" + message.getUsername() + contents);
@@ -48,7 +47,7 @@ public class ClientHandler implements Runnable {
 
 	public void run() {
 		try {
-
+			HashMap<String, Socket> users=new MapWrapper().getMap();
 			ObjectMapper mapper = new ObjectMapper();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
@@ -60,6 +59,12 @@ public class ClientHandler implements Runnable {
 				Date d;
 				System.out.println(raw);
 				if (cmd.equals("connect")) {
+					if(message.getUsername().equals(" ")){
+						message.setUsername("_");
+					}
+					if(users.containsKey(message.getUsername())){
+						message.setUsername(message.getUsername()+"1");
+					}
 					log.info("user <{}> connected", message.getUsername());
 					users.put(message.getUsername(), socket);
 					sendAll("> has connected", message, mapper);
@@ -111,6 +116,12 @@ public class ClientHandler implements Runnable {
 								new OutputStreamWriter(users.get(addressee).getOutputStream()));
 						dmWriter.write(mapper.writeValueAsString(message));
 						dmWriter.flush();
+						if(!addressee.equals(message.getUsername())){
+						writer = new PrintWriter(
+								new OutputStreamWriter(socket.getOutputStream()));
+						writer.write(mapper.writeValueAsString(message));
+						writer.flush();
+						}
 					} else {
 						message.setContents(d.toString() + ": <" + message.getUsername() + "> : User <" + addressee
 								+ "> not found");

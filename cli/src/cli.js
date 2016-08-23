@@ -31,6 +31,7 @@ cli
           this.log(cli.chalk['blue'](message.toString()))
         }
       else if(message.getCommand()=="connect"||message.getCommand()=="disconnect"){
+          username=message.getUsername();
           this.log(cli.chalk['gray'](message.toString()))
         }
       else if(message.getCommand().charAt(0)=="@"){

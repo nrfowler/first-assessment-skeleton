@@ -12,6 +12,9 @@ export class Message {
   getCommand(){
     return this.command
   }
+  getUsername(){
+    return this.username
+  }
 
   toJSON () {
     return JSON.stringify({
