@@ -9,6 +9,10 @@ export class Message {
     this.contents = contents
   }
 
+  getCommand(){
+    return this.command
+  }
+
   toJSON () {
     return JSON.stringify({
       username: this.username,
