@@ -25,7 +25,13 @@ public class ClientHandler implements Runnable {
 		super();
 		this.socket = socket;
 	}
-
+/**
+ * Sends a message to all users on the server.
+ * @param contents: String to concatenate to date and username
+ * @param message: Message object that was received from client
+ * @param mapper: ObjectMapper for converting message to JSON
+ * @throws IOException
+ */
 	private void sendAll(String contents, Message message, ObjectMapper mapper) throws IOException {
 
 		Collection<Socket> keys = users.values();
