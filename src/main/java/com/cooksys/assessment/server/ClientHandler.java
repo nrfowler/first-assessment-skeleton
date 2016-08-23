@@ -21,17 +21,23 @@ public class ClientHandler implements Runnable {
 	private Logger log = LoggerFactory.getLogger(ClientHandler.class);
 	private Socket socket;
 	private String username;
+
 	public ClientHandler(Socket socket) {
 		super();
 		this.socket = socket;
 	}
-/**
- * Sends a message to all users on the server.
- * @param contents: String to concatenate to date and username
- * @param message: Message object that was received from client
- * @param mapper: ObjectMapper for converting message to JSON
- * @throws IOException
- */
+
+	/**
+	 * Sends a message to all users on the server.
+	 * 
+	 * @param contents:
+	 *            String to concatenate to date and username
+	 * @param message:
+	 *            Message object that was received from client
+	 * @param mapper:
+	 *            ObjectMapper for converting message to JSON
+	 * @throws IOException
+	 */
 	private void sendAll(String contents, Message message, ObjectMapper mapper) throws IOException {
 
 		Collection<Socket> keys = new MapWrapper().getMap().values();
@@ -49,7 +55,7 @@ public class ClientHandler implements Runnable {
 	public void run() {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
-			HashMap<String, Socket> users=new MapWrapper().getMap();
+			HashMap<String, Socket> users = new MapWrapper().getMap();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
 
@@ -60,11 +66,11 @@ public class ClientHandler implements Runnable {
 				Date d;
 				System.out.println(raw);
 				if (cmd.equals("connect")) {
-					username=message.getUsername();
-					username=username.replaceAll("\\s","_");
+					username = message.getUsername();
+					username = username.replaceAll("\\s", "_");
 					log.info("username is now: " + username);
-					if(users.containsKey(username)){
-						username=username+"1";
+					if (users.containsKey(username)) {
+						username = username + "1";
 					}
 					log.info("user <{}> connected", username);
 					users.put(username, socket);
@@ -88,7 +94,7 @@ public class ClientHandler implements Runnable {
 					writer.flush();
 				}
 				if (cmd.equals("users")) {
-					log.info(username+" got list of users: "+users.keySet().toString());
+					log.info(username + " got list of users: " + users.keySet().toString());
 					d = new Date();
 					message.setContents(d.toString() + ": currently connected users: \n<"
 							+ String.join(">\n<", users.keySet()) + ">");
@@ -103,13 +109,13 @@ public class ClientHandler implements Runnable {
 					String addressee;
 					String[] contents;
 					if (cmd.length() == 1) {
-						contents = message.getContents().split(" ",2);
+						contents = message.getContents().split(" ", 2);
 						addressee = contents[0];
 						message.setContents(contents[1]);
 					} else
 						addressee = cmd.substring(1);
 					d = new Date();
-					
+
 					if (users.containsKey(addressee) && users.get(addressee).isConnected()) {
 						log.info("sending message to : " + addressee);
 						message.setContents(
@@ -118,11 +124,10 @@ public class ClientHandler implements Runnable {
 								new OutputStreamWriter(users.get(addressee).getOutputStream()));
 						dmWriter.write(mapper.writeValueAsString(message));
 						dmWriter.flush();
-						if(!addressee.equals(message.getUsername())){
-						writer = new PrintWriter(
-								new OutputStreamWriter(socket.getOutputStream()));
-						writer.write(mapper.writeValueAsString(message));
-						writer.flush();
+						if (!addressee.equals(message.getUsername())) {
+							writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+							writer.write(mapper.writeValueAsString(message));
+							writer.flush();
 						}
 					} else {
 						message.setContents(d.toString() + ": <" + message.getUsername() + "> : User <" + addressee
@@ -133,7 +138,7 @@ public class ClientHandler implements Runnable {
 					}
 				}
 			}
-		} catch (SocketException e){
+		} catch (SocketException e) {
 			log.error("Socket connection error :/", e);
 			log.info("user <{}> disconnected", username);
 			try {
@@ -143,7 +148,7 @@ public class ClientHandler implements Runnable {
 				e1.printStackTrace();
 			}
 			if (new MapWrapper().getMap().remove(username, socket)) {
-				Message message=new Message();
+				Message message = new Message();
 				message.setUsername(username);
 				message.setCommand("disconnect");
 				message.setContents("");
@@ -154,10 +159,10 @@ public class ClientHandler implements Runnable {
 					e1.printStackTrace();
 				}
 			}
-		}catch (IOException e) {
+		} catch (IOException e) {
 			log.error("Something went wrong :/", e);
 		}
-		
+
 	}
 
 }
