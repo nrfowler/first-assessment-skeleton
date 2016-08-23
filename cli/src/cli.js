@@ -34,7 +34,7 @@ cli
           this.log(cli.chalk['gray'](message.toString()))
         }
       else if(message.getCommand().charAt(0)=="@"){
-          this.log(cli.chalk['red']['italic'](message.toString()))
+          this.log(cli.chalk['cyan']['italic'](message.toString()))
         }
       else if(message.getCommand()=="echo"){
           this.log(cli.chalk['bgBlack'](message.toString()))
