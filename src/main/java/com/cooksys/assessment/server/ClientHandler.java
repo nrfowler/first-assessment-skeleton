@@ -60,15 +60,15 @@ public class ClientHandler implements Runnable {
 				Date d;
 				System.out.println(raw);
 				if (cmd.equals("connect")) {
-					if(message.getUsername().equals(" ")){
-						message.setUsername("_");
-					}
-					if(users.containsKey(message.getUsername())){
-						message.setUsername(message.getUsername()+"1");
-					}
 					username=message.getUsername();
+					username=username.replaceAll("\\s","_");
+					log.info("username is now: " + username);
+					if(users.containsKey(username)){
+						username=username+"1";
+					}
 					log.info("user <{}> connected", username);
 					users.put(username, socket);
+					message.setUsername(username);
 					sendAll("> has connected", message, mapper);
 				}
 				if (cmd.equals("disconnect")) {
@@ -88,7 +88,7 @@ public class ClientHandler implements Runnable {
 					writer.flush();
 				}
 				if (cmd.equals("users")) {
-					log.info(users.keySet().toString());
+					log.info(username+" got list of users: "+users.keySet().toString());
 					d = new Date();
 					message.setContents(d.toString() + ": currently connected users: \n<"
 							+ String.join(">\n<", users.keySet()) + ">");
