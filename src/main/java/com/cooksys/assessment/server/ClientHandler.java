@@ -56,13 +56,13 @@ public class ClientHandler implements Runnable {
 				if (cmd.equals("connect")) {
 					log.info("user <{}> connected", message.getUsername());
 					users.put(message.getUsername(), socket);
-					sendAll(": <" + message.getUsername() + "> has connected", message, mapper);
+					sendAll("> has connected", message, mapper);
 				}
 				if (cmd.equals("disconnect")) {
 					log.info("user <{}> disconnected", message.getUsername());
 					this.socket.close();
 					if (users.remove(message.getUsername(), socket)) {
-						sendAll(": <" + message.getUsername() + "> has disconnected", message, mapper);
+						sendAll("> has disconnected", message, mapper);
 					}
 				}
 				if (cmd.equals("echo")) {
@@ -90,11 +90,13 @@ public class ClientHandler implements Runnable {
 					String addressee;
 					String[] contents;
 					if (cmd.length() == 1) {
-						contents = message.getContents().split(" ");
+						contents = message.getContents().split(" ",2);
 						addressee = contents[0];
+						message.setContents(contents[1]);
 					} else
 						addressee = cmd.substring(1);
 					d = new Date();
+					
 					if (users.containsKey(addressee) && users.get(addressee).isConnected()) {
 						log.info("sending message to : " + addressee);
 						message.setContents(
