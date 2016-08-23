@@ -26,12 +26,12 @@ public class ClientHandler implements Runnable {
 		this.socket = socket;
 	}
 	
-	private void connectionAlert(String status, Date d, Message message,ObjectMapper mapper) throws IOException{
+	private void sendAll(String contents, Message message,ObjectMapper mapper) throws IOException{
 		
 		Collection<Socket> keys = users.values();
-		d= new Date();
+		Date d1= new Date();
 		PrintWriter clWriter;
-		message.setContents(d.toString()+": <"+message.getUsername()+"> has connected");
+		message.setContents(d1.toString()+": <"+message.getUsername()+contents);
 		for(Socket s: keys){
 			clWriter=new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
 			clWriter.write(mapper.writeValueAsString(message));
@@ -56,29 +56,13 @@ public class ClientHandler implements Runnable {
 				if(cmd.equals("connect")){
 						log.info("user <{}> connected", message.getUsername());
 						users.put(message.getUsername(),socket);
-						Collection<Socket> keys = users.values();
-						d= new Date();
-						PrintWriter clWriter;
-						message.setContents(d.toString()+": <"+message.getUsername()+"> has connected");
-						for(Socket s: keys){
-							clWriter=new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
-							clWriter.write(mapper.writeValueAsString(message));
-							clWriter.flush();
-						}
+						sendAll(": <"+message.getUsername()+"> has connected",message, mapper);
 				}
 				if(cmd.equals("disconnect")){
 						log.info("user <{}> disconnected", message.getUsername());
 						this.socket.close();
-						users.remove(message.getUsername(),socket);
-						Collection<Socket> keys1 = users.values();
-						d= new Date();
-						message.setContents(d.toString()+": <"+message.getUsername()+"> has disconnected");
-						PrintWriter clWriter;
-						for(Socket s: keys1){
-							clWriter=new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
-							clWriter.write(mapper.writeValueAsString(message));
-							clWriter.flush();
-						}
+						if (users.remove(message.getUsername(),socket)) {
+						sendAll(": <"+message.getUsername()+"> has disconnected",message, mapper);}
 				}
 						if(cmd.equals("echo")){
 						log.info("user <{}> echoed message <{}>", message.getUsername(), message.getContents());
@@ -96,16 +80,8 @@ public class ClientHandler implements Runnable {
 						writer.flush();
 						}
 						if(cmd.equals("broadcast")){
-						Collection<Socket> keys11 = users.values();
 						log.info("user <{}> broadcasted message <{}>", message.getUsername(), message.getContents());
-						d=new Date();
-						message.setContents(d.toString()+": <"+message.getUsername()+"> (all): "+message.getContents());
-						PrintWriter bWriter;
-						for(Socket s: keys11){
-							bWriter=new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
-							bWriter.write(mapper.writeValueAsString(message));
-							bWriter.flush();
-						}
+						sendAll("> (all): "+message.getContents(),message,mapper);
 						}
 						if(cmd.startsWith("@")){
 							String addressee;
