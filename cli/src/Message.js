@@ -8,9 +8,14 @@ export class Message {
     this.command = command
     this.contents = contents
   }
-
+  setCommand(cmd){
+    this.command=cmd
+  }
   getCommand(){
     return this.command
+  }
+  setContents(con){
+     this.command=con
   }
   getUsername(){
     return this.username

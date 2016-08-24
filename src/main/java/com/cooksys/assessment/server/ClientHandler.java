@@ -131,7 +131,9 @@ public class ClientHandler implements Runnable {
 					log.info("Command not recognized");
 				}
 			}
-		} catch (SocketException e) {
+		} 
+		//if socket exception, disconnect user and remove them from users map and close socket
+		catch (SocketException e) {
 			log.error("Socket connection error :/", e);
 			log.info("user <{}> disconnected", username);
 			try {

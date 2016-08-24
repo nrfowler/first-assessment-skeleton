@@ -37,8 +37,6 @@ cli
         }
       else if(message.getCommand().charAt(0)=="@"){
           this.log(cli.chalk['cyan']['italic'](message.toString()))
-          message.setCommand("@")
-          message.setContents("@"+message.getUsername()+" ...yes")
           server.write(message.toJSON() + '\n')
         }
       else if(message.getCommand()=="echo"){
