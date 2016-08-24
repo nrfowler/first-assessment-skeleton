@@ -21,7 +21,7 @@ public class ClientHandler implements Runnable {
 	private Logger log = LoggerFactory.getLogger(ClientHandler.class);
 	private Socket socket;
 	private String username;
-
+	//TODO: put static arraylist of writers, static reader/writer of own socket
 	public ClientHandler(Socket socket) {
 		super();
 		this.socket = socket;
