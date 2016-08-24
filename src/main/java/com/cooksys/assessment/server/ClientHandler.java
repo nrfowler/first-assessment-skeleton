@@ -104,7 +104,8 @@ public class ClientHandler implements Runnable {
 						String[] contents;
 						contents = message.getContents().split(" ", 2);
 						addressee = contents[0].replaceAll("@", "");
-						message.setContents(contents[1]);
+						
+						message.setContents(contents.length>1? contents[1]:"");
 					} else
 						addressee = cmd.substring(1);
 					d = new Date();
