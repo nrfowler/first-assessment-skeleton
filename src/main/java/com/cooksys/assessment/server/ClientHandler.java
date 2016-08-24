@@ -20,7 +20,7 @@ public class ClientHandler implements Runnable {
 	private Logger log = LoggerFactory.getLogger(ClientHandler.class);
 	private Socket socket;
 	private String username;
-	static Map<String, SocketWriter> users = new HashMap<String, SocketWriter>();
+	static Map<String, SocketWriter> users = new ConcurrentHashMap<String, SocketWriter>();
 	private ObjectMapper mapper = new ObjectMapper();
 
 	public ClientHandler(Socket socket) {
@@ -54,7 +54,7 @@ public class ClientHandler implements Runnable {
 	public void run() {
 		try {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+			PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()),true);
 
 			while (!socket.isClosed()) {
 				log.info(username+" ");
@@ -92,8 +92,9 @@ public class ClientHandler implements Runnable {
 					d = new Date();
 					message.setContents(d.toString() + ": currently connected users: \n<"
 							+ String.join(">\n<", users.keySet()) + ">");
-					writer.write(mapper.writeValueAsString(message));
-					writer.flush();
+					users.get(username).println(mapper.writeValueAsString(message));
+					//writer.write(mapper.writeValueAsString(message));
+					//writer.flush();
 				} else if (cmd.equals("broadcast")) {
 					log.info("user <{}> broadcasted message <{}>", this.username, message.getContents());
 					sendAll("> (all): " + message.getContents(), "broadcast");

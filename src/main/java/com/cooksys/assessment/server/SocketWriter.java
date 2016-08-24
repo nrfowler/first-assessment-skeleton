@@ -21,6 +21,14 @@ public class SocketWriter {
 	public PrintWriter getWriter() {
 		return writer;
 	}
+	
+	public void println(String msg){
+		synchronized(this){
+			this.writer.write(msg);
+			this.writer.flush();
+		}
+		return;
+	}
 	public void setWriter(PrintWriter writer) {
 		this.writer = writer;
 	}

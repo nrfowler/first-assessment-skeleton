@@ -61,6 +61,7 @@ cli
     } else if (command === 'users') {
       server.write(new Message({ username, command }).toJSON() + '\n')
       server.write(new Message({ username, command }).toJSON() + '\n')
+
       defaultCmd=command
     } else if (command === 'broadcast') {
       server.write(new Message({ username, command, contents }).toJSON() + '\n')
