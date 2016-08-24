@@ -1,5 +1,6 @@
 export class Message {
   static fromJSON (buffer) {
+    let messages=[]
     return new Message(JSON.parse(buffer.toString()))
   }
 
