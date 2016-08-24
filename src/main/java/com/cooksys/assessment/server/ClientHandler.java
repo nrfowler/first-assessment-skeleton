@@ -8,7 +8,6 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -20,7 +19,7 @@ public class ClientHandler implements Runnable {
 	private Logger log = LoggerFactory.getLogger(ClientHandler.class);
 	private Socket socket;
 	private String username;
-	static Map<String, SocketWriter> users = new HashMap<String, SocketWriter>();
+	static Map<String, SocketWriter> users = new ConcurrentHashMap<String, SocketWriter>();
 	private ObjectMapper mapper = new ObjectMapper();
 
 	public ClientHandler(Socket socket) {
@@ -102,7 +101,7 @@ public class ClientHandler implements Runnable {
 					if (cmd.length() == 1) {
 						String[] contents;
 						contents = message.getContents().split(" ", 2);
-						addressee = contents[0];
+						addressee = contents[0].replaceAll("@", "");
 						message.setContents(contents[1]);
 					} else
 						addressee = cmd.substring(1);

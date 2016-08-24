@@ -15,7 +15,7 @@ export class Message {
     return this.command
   }
   setContents(con){
-     this.command=con
+     this.contents=con
   }
   getUsername(){
     return this.username

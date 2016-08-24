@@ -16,7 +16,7 @@ cli
   .mode('connect <username> [url]')
   .delimiter(cli.chalk['green']('connected>'))
   .init(function (args, callback) {
-    username = 'ChatBot'
+    username = args.username
     let host=args.url ? args.url : 'localhost'
     server = connect({ host: host, port: 8080 }, () => {
       server.write(new Message({ username, command: 'connect' }).toJSON() + '\n')
@@ -37,9 +37,7 @@ cli
         }
       else if(message.getCommand().charAt(0)=="@"){
           this.log(cli.chalk['cyan']['italic'](message.toString()))
-          message.setCommand("@")
-          message.setContents("@"+message.getUsername()+" ...yes")
-          server.write(message.toJSON() + '\n')
+
         }
       else if(message.getCommand()=="echo"){
           this.log(cli.chalk['bgBlack'](message.toString()))
