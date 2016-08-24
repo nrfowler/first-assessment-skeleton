@@ -21,7 +21,6 @@ public class ClientHandler implements Runnable {
 	private Socket socket;
 	private String username;
 	static Map<String, SocketWriter> users = new HashMap<String, SocketWriter>();
-	private PrintWriter writer;
 	private ObjectMapper mapper = new ObjectMapper();
 
 	public ClientHandler(Socket socket) {
@@ -56,7 +55,7 @@ public class ClientHandler implements Runnable {
 	public void run() {
 		try {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			this.writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+			PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
 
 			while (!socket.isClosed()) {
 				String raw = reader.readLine();
@@ -158,7 +157,6 @@ public class ClientHandler implements Runnable {
 		finally{
 			for (SocketWriter sw: users.values()){
 				sw.getWriter().close();
-				writer.close();
 				
 			}
 		}
