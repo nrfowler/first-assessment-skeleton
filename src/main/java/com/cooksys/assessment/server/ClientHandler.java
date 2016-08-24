@@ -7,9 +7,11 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +23,9 @@ public class ClientHandler implements Runnable {
 	private Logger log = LoggerFactory.getLogger(ClientHandler.class);
 	private Socket socket;
 	private String username;
-	//TODO: put static arraylist of writers, static reader/writer of own socket
+	// TODO: put static arraylist of writers, static reader/writer of own socket
+	private static List<PrintWriter> writers = new ArrayList<PrintWriter>();
+
 	public ClientHandler(Socket socket) {
 		super();
 		this.socket = socket;
@@ -39,15 +43,17 @@ public class ClientHandler implements Runnable {
 	 * @throws IOException
 	 */
 	private void sendAll(String contents, Message message, ObjectMapper mapper) throws IOException {
-
-		Collection<Socket> keys = new MapWrapper().getMap().values();
+		if (writers.size() == 0) {
+			Collection<Socket> keys = new MapWrapper().getMap().values();
+			for (Socket s : keys) {
+				writers.add(new PrintWriter(new OutputStreamWriter(s.getOutputStream())));
+			}
+		}
 		Date d1 = new Date();
-		PrintWriter clWriter;
 		message.setContents(d1.toString() + ": <" + message.getUsername() + contents);
-		for (Socket s : keys) {
-			clWriter = new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
-			clWriter.write(mapper.writeValueAsString(message));
-			clWriter.flush();
+		for (PrintWriter w : writers) {
+			w.write(mapper.writeValueAsString(message));
+			w.flush();
 		}
 
 	}
@@ -74,6 +80,7 @@ public class ClientHandler implements Runnable {
 					}
 					log.info("user <{}> connected", username);
 					users.put(username, socket);
+					writers.add(new PrintWriter(new OutputStreamWriter(socket.getOutputStream())));
 					message.setUsername(username);
 					sendAll("> has connected", message, mapper);
 				}
