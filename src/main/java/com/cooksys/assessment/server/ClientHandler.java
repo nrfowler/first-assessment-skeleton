@@ -24,7 +24,8 @@ public class ClientHandler implements Runnable {
 	private Logger log = LoggerFactory.getLogger(ClientHandler.class);
 	private Socket socket;
 	private String username;
-	// TODO: put static arraylist of writers, static reader/writer of own socket
+	static Map<String, SocketWriter> users = new HashMap<String, SocketWriter>();
+	private PrintWriter writer;
 
 	public ClientHandler(Socket socket) {
 		super();
@@ -43,12 +44,10 @@ public class ClientHandler implements Runnable {
 	 * @throws IOException
 	 */
 	private void sendAll(String contents, Message message, ObjectMapper mapper) throws IOException {
-		
-			Collection<SocketWriter> keys = new MapWrapper().getMap().values();
 			PrintWriter w;
 			Date d1 = new Date();
 			message.setContents(d1.toString() + ": <" + message.getUsername() + contents);
-			for (SocketWriter s : keys) {
+			for (SocketWriter s : new MapWrapper().getMap().values()) {
 				w=new PrintWriter(new OutputStreamWriter(s.getSocket().getOutputStream()));
 				w.write(mapper.writeValueAsString(message));
 				w.flush();
@@ -58,9 +57,8 @@ public class ClientHandler implements Runnable {
 	public void run() {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
-			Map<String, SocketWriter> users = new MapWrapper().getMap();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+			this.writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
 
 			while (!socket.isClosed()) {
 				String raw = reader.readLine();
