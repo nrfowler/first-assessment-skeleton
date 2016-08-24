@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,6 @@ public class ClientHandler implements Runnable {
 	private Socket socket;
 	private String username;
 	// TODO: put static arraylist of writers, static reader/writer of own socket
-	private static List<PrintWriter> writers = new ArrayList<PrintWriter>();
 
 	public ClientHandler(Socket socket) {
 		super();
@@ -43,25 +43,22 @@ public class ClientHandler implements Runnable {
 	 * @throws IOException
 	 */
 	private void sendAll(String contents, Message message, ObjectMapper mapper) throws IOException {
-		if (writers.size() == 0) {
-			Collection<Socket> keys = new MapWrapper().getMap().values();
-			for (Socket s : keys) {
-				writers.add(new PrintWriter(new OutputStreamWriter(s.getOutputStream())));
+		
+			Collection<SocketWriter> keys = new MapWrapper().getMap().values();
+			PrintWriter w;
+			Date d1 = new Date();
+			message.setContents(d1.toString() + ": <" + message.getUsername() + contents);
+			for (SocketWriter s : keys) {
+				w=new PrintWriter(new OutputStreamWriter(s.getSocket().getOutputStream()));
+				w.write(mapper.writeValueAsString(message));
+				w.flush();
 			}
-		}
-		Date d1 = new Date();
-		message.setContents(d1.toString() + ": <" + message.getUsername() + contents);
-		for (PrintWriter w : writers) {
-			w.write(mapper.writeValueAsString(message));
-			w.flush();
-		}
-
 	}
 
 	public void run() {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
-			HashMap<String, Socket> users = new MapWrapper().getMap();
+			Map<String, SocketWriter> users = new MapWrapper().getMap();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
 
@@ -79,8 +76,7 @@ public class ClientHandler implements Runnable {
 						username = username + "1";
 					}
 					log.info("user <{}> connected", username);
-					users.put(username, socket);
-					writers.add(new PrintWriter(new OutputStreamWriter(socket.getOutputStream())));
+					users.put(username, new SocketWriter(socket, new PrintWriter(new OutputStreamWriter(socket.getOutputStream()))));
 					message.setUsername(username);
 					sendAll("> has connected", message, mapper);
 				}
@@ -123,12 +119,12 @@ public class ClientHandler implements Runnable {
 						addressee = cmd.substring(1);
 					d = new Date();
 
-					if (users.containsKey(addressee) && users.get(addressee).isConnected()) {
+					if (users.containsKey(addressee) && users.get(addressee).getSocket().isConnected()) {
 						log.info("sending message to : " + addressee);
 						message.setContents(
 								d.toString() + ": <" + message.getUsername() + "> (whisper): " + message.getContents());
 						PrintWriter dmWriter = new PrintWriter(
-								new OutputStreamWriter(users.get(addressee).getOutputStream()));
+								new OutputStreamWriter(users.get(addressee).getSocket().getOutputStream()));
 						dmWriter.write(mapper.writeValueAsString(message));
 						dmWriter.flush();
 						if (!addressee.equals(message.getUsername())) {

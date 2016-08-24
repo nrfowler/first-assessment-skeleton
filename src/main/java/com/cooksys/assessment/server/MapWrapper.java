@@ -2,10 +2,11 @@ package com.cooksys.assessment.server;
 
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Map;
 
 public class MapWrapper {
-	static HashMap<String, Socket> users = new HashMap<String, Socket>();
-	HashMap<String, Socket> getMap(){
+	static Map<String, SocketWriter> users = new HashMap<String, SocketWriter>();
+	Map<String, SocketWriter> getMap(){
 		return users;
 	}
 	
