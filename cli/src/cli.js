@@ -66,7 +66,7 @@ cli
       defaultCmd=command
     } else if (command.charAt(0)==='@') {
       server.write(new Message({ username, command, contents }).toJSON() + '\n')
-      defaultCmd=command
+      defaultCmd='@'
     } else if (defaultCmd===undefined){
       this.log(`Command <${command}> was not recognized`)
     }
