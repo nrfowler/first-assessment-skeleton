@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -19,7 +20,7 @@ public class ClientHandler implements Runnable {
 	private Logger log = LoggerFactory.getLogger(ClientHandler.class);
 	private Socket socket;
 	private String username;
-	static Map<String, SocketWriter> users = new ConcurrentHashMap<String, SocketWriter>();
+	static Map<String, SocketWriter> users = new HashMap<String, SocketWriter>();
 	private ObjectMapper mapper = new ObjectMapper();
 
 	public ClientHandler(Socket socket) {
@@ -57,6 +58,7 @@ public class ClientHandler implements Runnable {
 			PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
 
 			while (!socket.isClosed()) {
+				log.info(username+" ");
 				String raw = reader.readLine();
 				Message message = mapper.readValue(raw, Message.class);
 				String cmd = message.getCommand();
@@ -76,9 +78,9 @@ public class ClientHandler implements Runnable {
 				} else if (cmd.equals("disconnect")) {
 					log.info("user <{}> disconnected", this.username);
 					this.socket.close();
-					if (users.remove(this.username, socket)) {
-						sendAll("> has disconnected", message);
-					}
+					users.remove(this.username);
+					sendAll("> has disconnected", message);
+					break;
 				} else if (cmd.equals("echo")) {
 					log.info("user <{}> echoed message <{}>", this.username, message.getContents());
 					d = new Date();
@@ -155,12 +157,7 @@ public class ClientHandler implements Runnable {
 		catch (IOException e) {
 			log.error("Something went wrong :/", e);
 		}
-		finally{
-			for (SocketWriter sw: users.values()){
-				sw.getWriter().close();
-				
-			}
-		}
+
 
 	}
 }
