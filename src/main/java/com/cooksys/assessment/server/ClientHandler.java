@@ -92,9 +92,12 @@ public class ClientHandler implements Runnable {
 					d = new Date();
 					message.setContents(d.toString() + ": currently connected users: \n<"
 							+ String.join(">\n<", users.keySet()) + ">");
-					users.get(username).println(mapper.writeValueAsString(message));
-					//writer.write(mapper.writeValueAsString(message));
-					//writer.flush();
+					//users.get(username).println(mapper.writeValueAsString(message));
+					writer.write(mapper.writeValueAsString(message));
+					log.info(mapper.writeValueAsString(message));
+					writer.flush();
+					
+					
 				} else if (cmd.equals("broadcast")) {
 					log.info("user <{}> broadcasted message <{}>", this.username, message.getContents());
 					sendAll("> (all): " + message.getContents(), "broadcast");

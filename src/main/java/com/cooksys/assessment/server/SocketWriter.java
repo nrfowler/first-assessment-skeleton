@@ -22,7 +22,7 @@ public class SocketWriter {
 		return writer;
 	}
 	
-	public void println(String msg){
+	public void println(String msg){//needs to be a thread in order to block...???
 		synchronized(this){
 			this.writer.write(msg);
 			this.writer.flush();
