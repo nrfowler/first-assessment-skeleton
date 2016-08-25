@@ -6,29 +6,32 @@ import java.net.Socket;
 public class SocketWriter {
 	private Socket socket;
 	private PrintWriter writer;
-	
+
 	public SocketWriter(Socket socket, PrintWriter writer) {
 		super();
 		this.socket = socket;
 		this.writer = writer;
 	}
+
 	public Socket getSocket() {
 		return socket;
 	}
+
 	public void setSocket(Socket socket) {
 		this.socket = socket;
 	}
+
 	public PrintWriter getWriter() {
 		return writer;
 	}
-	
-	public void println(String msg){//needs to be a thread in order to block...???
-		synchronized(this){
-			this.writer.write(msg);
-			this.writer.flush();
-		}
+
+	public synchronized void print(String msg) {
+		this.writer.write(msg);
+		this.writer.flush();
+
 		return;
 	}
+
 	public void setWriter(PrintWriter writer) {
 		this.writer = writer;
 	}

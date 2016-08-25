@@ -105,9 +105,8 @@ public class ClientHandler implements Runnable {
 					d = new Date();
 					message.setContents(d.toString() + ": currently connected users: \n<"
 							+ String.join(">\n<", users.keySet()) + ">");
-					writer.write(mapper.writeValueAsString(message));
+					users.get(username).print(mapper.writeValueAsString(message));
 					log.info(mapper.writeValueAsString(message));
-					writer.flush();
 					
 					
 				} else if (cmd.equals("broadcast")) {
@@ -150,7 +149,6 @@ public class ClientHandler implements Runnable {
 				} else {
 					log.info("Command not recognized");
 				}
-				sleep();
 			}
 		} 
 		//if socket exception, disconnect user and remove them from users map and close socket
