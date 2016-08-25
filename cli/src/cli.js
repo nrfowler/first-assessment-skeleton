@@ -37,7 +37,7 @@ cli
           this.log(cli.chalk['gray'](message.toString()))
         }
       else if(message.getCommand()&&message.getCommand().charAt(0)=="@"){
-          this.log(cli.chalk['cyan']['italic'](message.toString()))
+          this.log(cli.chalk['cyan'](message.toString()))
 
         }
       else if(message.getCommand()=="echo"){
@@ -61,10 +61,8 @@ cli
       defaultCmd=command
     } else if (command === 'users') {
       server.write(new Message({ username, command }).toJSON() + '\n')
-      server.write(new Message({ username, command }).toJSON() + '\n')
       defaultCmd=command
     } else if (command === 'broadcast') {
-      server.write(new Message({ username, command, contents }).toJSON() + '\n')
       server.write(new Message({ username, command, contents }).toJSON() + '\n')
       defaultCmd=command
     } else if (command.charAt(0)==='@') {

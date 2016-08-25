@@ -1,6 +1,6 @@
 export class Message {
   static fromJSON (buffer) {
-    console.log("buffer: "+buffer.toString())
+    //console.log("buffer: "+buffer.toString())
     return new Message(JSON.parse(buffer.toString()))
   }
 
