@@ -18,19 +18,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ClientHandler implements Runnable {
 	private Logger log = LoggerFactory.getLogger(ClientHandler.class);
-	private Socket socket;
+	private SocketWriter clientInfo;
 	private String username;
 	static Map<String, SocketWriter> users = new ConcurrentHashMap<String, SocketWriter>();
 	private ObjectMapper mapper = new ObjectMapper();
 
-	public ClientHandler(Socket socket) {
+	public ClientHandler(Socket s) throws IOException {
 		super();
-		this.socket = socket;
+		this.clientInfo = new SocketWriter(s, new PrintWriter(new OutputStreamWriter(s.getOutputStream())));
 	}
-/**
- * sleep the thread to prevent writer from printing multiple json objects in one line
- */
-	private void sleep(){
+
+	/**
+	 * sleep the thread to prevent writer from printing multiple json objects in
+	 * one line
+	 */
+	private void sleep() {
 		try {
 			Thread.sleep(100);
 		} catch (InterruptedException e) {
@@ -40,7 +42,8 @@ public class ClientHandler implements Runnable {
 	}
 
 	/**
-	 * Sends a message to all users on the server. Adds this.username and a Timestamp to the contents.
+	 * Sends a message to all users on the server. Adds username and a Timestamp
+	 * to the contents.
 	 * 
 	 * @param contents:
 	 *            Additional string to append to the message contents
@@ -52,11 +55,10 @@ public class ClientHandler implements Runnable {
 		Date d1 = new Date();
 		Message message = new Message();
 		message.setCommand(command);
-		message.setContents(d1.toString() + ": <" + this.username + contents);
+		message.setContents(d1.toString() + ": <" + username + contents);
 		for (SocketWriter s : users.values()) {
-			s.getWriter().write(mapper.writeValueAsString(message));
-			s.getWriter().flush();
-		}	
+			s.print(mapper.writeValueAsString(message));
+		}
 
 	}
 
@@ -66,11 +68,11 @@ public class ClientHandler implements Runnable {
 	 */
 	public void run() {
 		try {
-			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()),true);
+			// Socket socket=clientInfo.getSocket();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(clientInfo.getSocket().getInputStream()));
 
-			while (!socket.isClosed()) {
-				log.info(username+" ");
+			while (!clientInfo.getSocket().isClosed()) {
+				log.info(username + " ");
 				String raw = reader.readLine();
 				Message message = mapper.readValue(raw, Message.class);
 				String cmd = message.getCommand();
@@ -83,79 +85,75 @@ public class ClientHandler implements Runnable {
 						username = username + "1";
 					}
 					log.info("user <{}> connected", username);
-					users.put(username, new SocketWriter(socket,
-							new PrintWriter(new OutputStreamWriter(socket.getOutputStream()))));
+					users.put(username, new SocketWriter(clientInfo.getSocket(),
+							new PrintWriter(new OutputStreamWriter(clientInfo.getSocket().getOutputStream()))));
 					message.setUsername(username);
 					sendAll("> has connected", "connect");
 				} else if (cmd.equals("disconnect")) {
-					log.info("user <{}> disconnected", this.username);
-					this.socket.close();
-					users.remove(this.username);
+					log.info("user <{}> disconnected", username);
+					clientInfo.getSocket().close();
+					users.remove(username);
 					sendAll("> has disconnected", "disconnect");
 					break;
 				} else if (cmd.equals("echo")) {
-					log.info("user <{}> echoed message <{}>", this.username, message.getContents());
+					log.info("user <{}> echoed message <{}>", username, message.getContents());
 					d = new Date();
-					message.setContents(
-							d.toString() + ": <" + this.username + "> (echo): " + message.getContents());
-					writer.write(mapper.writeValueAsString(message));
-					writer.flush();
+					message.setContents(d.toString() + ": <" + username + "> (echo): " + message.getContents());
+					clientInfo.print(mapper.writeValueAsString(message));
 				} else if (cmd.equals("users")) {
 					log.info(username + " got list of users: " + users.keySet().toString());
 					d = new Date();
 					message.setContents(d.toString() + ": currently connected users: \n<"
 							+ String.join(">\n<", users.keySet()) + ">");
-					users.get(username).print(mapper.writeValueAsString(message));
+					clientInfo.print(mapper.writeValueAsString(message));
 					log.info(mapper.writeValueAsString(message));
-					
-					
+
 				} else if (cmd.equals("broadcast")) {
-					log.info("user <{}> broadcasted message <{}>", this.username, message.getContents());
+					log.info("user <{}> broadcasted message <{}>", username, message.getContents());
 					sendAll("> (all): " + message.getContents(), "broadcast");
-				} 
-				else if (cmd.startsWith("@")) {
+				} else if (cmd.startsWith("@")) {
 					String addressee;
-					//When msg.command="@", take the first word of msg.content as the recipient. Remove that word from contents.
+					// When msg.command="@", take the first word of msg.content
+					// as the recipient. Remove that word from contents.
 					if (cmd.length() == 1) {
 						String[] contents;
 						contents = message.getContents().split(" ", 2);
 						addressee = contents[0].replaceAll("@", "");
-						message.setContents(contents.length>1? contents[1]:"");
-					} 
-					//When msg.command="@user", take user as the recipient.
+						message.setContents(contents.length > 1 ? contents[1] : "");
+					}
+					// When msg.command="@user", take user as the recipient.
 					else
 						addressee = cmd.substring(1);
 					d = new Date();
 					if (users.containsKey(addressee) && users.get(addressee).getSocket().isConnected()) {
 						log.info("sending message to : " + addressee);
-						message.setContents(
-								d.toString() + ": <" + this.username + "> (whisper): " + message.getContents());
+						message.setContents(d.toString() + ": <" + username + "> (whisper): " + message.getContents());
 						PrintWriter dmWriter = new PrintWriter(
 								new OutputStreamWriter(users.get(addressee).getSocket().getOutputStream()));
 						dmWriter.write(mapper.writeValueAsString(message));
 						dmWriter.flush();
 						// if user is sending DM to a user, send a copy of
 						// DM to the sender
-						if (!addressee.equals(this.username)) {
-							writer.write(mapper.writeValueAsString(message));
-							writer.flush();
+						if (!addressee.equals(username)) {
+							clientInfo.print(mapper.writeValueAsString(message));
+
 						}
 					} else {
-						message.setContents(d.toString() + ": <" + this.username + "> : User <" + addressee
-								+ "> not found");
-						writer.write(mapper.writeValueAsString(message));
-						writer.flush();
+						message.setContents(d.toString() + ": <" + username + "> : User <" + addressee + "> not found");
+						clientInfo.print(mapper.writeValueAsString(message));
 					}
 				} else {
 					log.info("Command not recognized");
 				}
+				sleep();
 			}
-		} 
-		//if socket exception, disconnect user and remove them from users map and close socket
+		}
+		// if socket exception, disconnect user and remove them from users map
+		// and close socket
 		catch (SocketException e) {
 			log.error("Socket connection error :/", e);
 			try {
-				this.socket.close();
+				clientInfo.getSocket().close();
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
@@ -171,7 +169,6 @@ public class ClientHandler implements Runnable {
 		catch (IOException e) {
 			log.error("Something went wrong :/", e);
 		}
-
 
 	}
 }

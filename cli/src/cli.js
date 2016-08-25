@@ -17,7 +17,7 @@ cli
   .delimiter(cli.chalk['green']('connected>'))
   .init(function (args, callback) {
     username = args.username
-    let host=args.url ? args.url : 'localhost'
+    let host = args.url ? args.url : 'localhost'
     server = connect({ host: host, port: 8080 }, () => {
       server.write(new Message({ username, command: 'connect' }).toJSON() + '\n')
       callback()

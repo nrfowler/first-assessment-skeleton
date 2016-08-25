@@ -13,15 +13,15 @@ public class SocketWriter {
 		this.writer = writer;
 	}
 
-	public Socket getSocket() {
+	public synchronized Socket getSocket() {
 		return socket;
 	}
 
-	public void setSocket(Socket socket) {
+	public synchronized void setSocket(Socket socket) {
 		this.socket = socket;
 	}
 
-	public PrintWriter getWriter() {
+	public synchronized PrintWriter getWriter() {
 		return writer;
 	}
 
@@ -32,7 +32,7 @@ public class SocketWriter {
 		return;
 	}
 
-	public void setWriter(PrintWriter writer) {
+	public synchronized void setWriter(PrintWriter writer) {
 		this.writer = writer;
 	}
 }
