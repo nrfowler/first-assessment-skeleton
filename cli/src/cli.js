@@ -24,7 +24,6 @@ cli
     })
 
     server.on('data', (buffer) => {
-      //TODO: A parser for separating buffer into an array of buffers, for when the client receives multiple JSON objects in one buffer.
       let message=Message.fromJSON(buffer)
       if(message.getCommand()=="broadcast"){
         this.log(cli.chalk['bgRed'](message.toString()))
