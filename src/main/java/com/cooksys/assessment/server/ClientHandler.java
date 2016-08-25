@@ -27,6 +27,17 @@ public class ClientHandler implements Runnable {
 		super();
 		this.socket = socket;
 	}
+/**
+ * sleep the thread to prevent writer from printing multiple json objects in one line
+ */
+	private void sleep(){
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+
+			e.printStackTrace();
+		}
+	}
 
 	/**
 	 * Sends a message to all users on the server. Adds this.username and a Timestamp to the contents.
@@ -40,11 +51,13 @@ public class ClientHandler implements Runnable {
 	private void sendAll(String contents, String command) throws IOException {
 		Date d1 = new Date();
 		Message message = new Message();
+		message.setCommand(command);
 		message.setContents(d1.toString() + ": <" + this.username + contents);
 		for (SocketWriter s : users.values()) {
 			s.getWriter().write(mapper.writeValueAsString(message));
 			s.getWriter().flush();
-		}
+		}	
+
 	}
 
 	/**
@@ -92,7 +105,6 @@ public class ClientHandler implements Runnable {
 					d = new Date();
 					message.setContents(d.toString() + ": currently connected users: \n<"
 							+ String.join(">\n<", users.keySet()) + ">");
-					//users.get(username).println(mapper.writeValueAsString(message));
 					writer.write(mapper.writeValueAsString(message));
 					log.info(mapper.writeValueAsString(message));
 					writer.flush();
@@ -138,6 +150,7 @@ public class ClientHandler implements Runnable {
 				} else {
 					log.info("Command not recognized");
 				}
+				sleep();
 			}
 		} 
 		//if socket exception, disconnect user and remove them from users map and close socket
